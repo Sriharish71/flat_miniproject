@@ -1,0 +1,2489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AutomataLab — Interactive Automata & DFA Simulator Suite</title>
+  <meta name="description" content="Interactive Deterministic Finite Automata (DFA) simulator suite with multiple machines: substring recognition, binary modulo arithmetic, parity checkers, and pattern matching." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-main: #07090e;
+      --bg-surface: #0f1422;
+      --bg-card: rgba(18, 24, 40, 0.85);
+      --bg-card-hover: rgba(28, 38, 62, 0.95);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-glow: rgba(56, 189, 248, 0.35);
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      
+      --cyan-core: #00f2fe;
+      --cyan-glow: rgba(0, 242, 254, 0.4);
+      --emerald-core: #10b981;
+      --emerald-glow: rgba(16, 185, 129, 0.4);
+      --rose-core: #f43f5e;
+      --rose-glow: rgba(244, 63, 94, 0.4);
+      --amber-core: #f59e0b;
+      --indigo-core: #6366f1;
+      --purple-core: #a855f7;
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(14, 165, 233, 0.09) 0%, transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(168, 85, 247, 0.08) 0%, transparent 40%),
+        linear-gradient(to bottom, rgba(255,255,255,0.015) 1px, transparent 1px),
+        linear-gradient(to right, rgba(255,255,255,0.015) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+      color: var(--text-primary);
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      padding: 24px 16px 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1240px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* HEADER */
+    header {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      text-align: center;
+      position: relative;
+    }
+
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      align-self: center;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      background: rgba(6, 182, 212, 0.1);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      color: var(--cyan-core);
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .header-badge .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--cyan-core);
+      box-shadow: 0 0 8px var(--cyan-core);
+      animation: pulseDot 2s infinite;
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    h1 {
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #ffffff 20%, #cbd5e1 60%, #38bdf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      max-width: 700px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+
+    .formal-lang {
+      font-family: 'JetBrains Mono', monospace;
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 3px 8px;
+      border-radius: 6px;
+      color: #38bdf8;
+      font-weight: 600;
+      font-size: 0.88rem;
+      border: 1px solid var(--border-subtle);
+    }
+
+    /* MACHINE SELECTOR NAV */
+    .machine-selector-card {
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .selector-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .selector-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .machine-pills {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: thin;
+    }
+
+    .machine-pill {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 8px 14px;
+      color: var(--text-secondary);
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      transition: var(--transition);
+      user-select: none;
+    }
+
+    .machine-pill:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #f8fafc;
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .machine-pill.active {
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.2), rgba(99, 102, 241, 0.2));
+      border-color: #38bdf8;
+      color: #ffffff;
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.3);
+    }
+
+    .machine-pill .tag {
+      font-size: 0.68rem;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.3);
+      color: #38bdf8;
+    }
+
+    /* GRID LAYOUT */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    @media (min-width: 1024px) {
+      .dashboard-grid {
+        grid-template-columns: 1.55fr 1fr;
+      }
+    }
+
+    /* CARD STYLING */
+    .card {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+    }
+
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      color: var(--text-primary);
+    }
+
+    .card-title .icon-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title svg {
+      color: #38bdf8;
+    }
+
+    /* SVG DIAGRAM AREA */
+    .svg-container {
+      width: 100%;
+      min-height: 330px;
+      background: radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.8) 0%, rgba(8, 12, 22, 0.95) 100%);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    svg.dfa-svg {
+      width: 100%;
+      height: 100%;
+      max-height: 360px;
+      display: block;
+    }
+
+    /* SVG Elements */
+    .state-node {
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .state-circle-outer {
+      fill: #111726;
+      stroke: #334155;
+      stroke-width: 2.5;
+      transition: all 0.3s ease;
+    }
+
+    .state-circle-inner {
+      fill: none;
+      stroke: #334155;
+      stroke-width: 2;
+      transition: all 0.3s ease;
+    }
+
+    .state-text {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 16px;
+      font-weight: 700;
+      fill: #cbd5e1;
+      text-anchor: middle;
+      dominant-baseline: central;
+      pointer-events: none;
+      transition: fill 0.3s ease;
+    }
+
+    .state-desc-text {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 10px;
+      font-weight: 600;
+      fill: #64748b;
+      text-anchor: middle;
+      pointer-events: none;
+    }
+
+    /* Active State Highlights */
+    .state-node.active .state-circle-outer {
+      fill: #0c2338;
+      stroke: #00f2fe;
+      stroke-width: 3.5;
+      filter: drop-shadow(0 0 12px rgba(0, 242, 254, 0.7));
+    }
+
+    .state-node.active .state-circle-inner {
+      stroke: #00f2fe;
+      stroke-width: 2.5;
+    }
+
+    .state-node.active .state-text {
+      fill: #ffffff;
+      font-weight: 800;
+    }
+
+    .state-node.active-accept .state-circle-outer {
+      fill: #062e21 !important;
+      stroke: #10b981 !important;
+      filter: drop-shadow(0 0 16px rgba(16, 185, 129, 0.8)) !important;
+    }
+
+    .state-node.active-accept .state-circle-inner {
+      stroke: #10b981 !important;
+    }
+
+    .state-node.active-reject .state-circle-outer {
+      fill: #2c0f17 !important;
+      stroke: #f43f5e !important;
+      filter: drop-shadow(0 0 14px rgba(244, 63, 94, 0.8)) !important;
+    }
+
+    /* Transitions */
+    .transition-path {
+      fill: none;
+      stroke: #334155;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      transition: stroke 0.3s ease, stroke-width 0.3s ease;
+    }
+
+    .transition-label-bg {
+      fill: #0b0f19;
+      stroke: #1e293b;
+      stroke-width: 1.2;
+      rx: 5;
+      ry: 5;
+      transition: all 0.3s ease;
+    }
+
+    .transition-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      fill: #94a3b8;
+      text-anchor: middle;
+      dominant-baseline: central;
+      pointer-events: none;
+      transition: fill 0.3s ease;
+    }
+
+    .transition-group.active .transition-path {
+      stroke: #00f2fe;
+      stroke-width: 3.5;
+      filter: drop-shadow(0 0 8px rgba(0, 242, 254, 0.8));
+      stroke-dasharray: 6 3;
+      animation: dashTravel 0.6s linear infinite;
+    }
+
+    .transition-group.active .transition-label-bg {
+      fill: #002d3d;
+      stroke: #00f2fe;
+      filter: drop-shadow(0 0 6px rgba(0, 242, 254, 0.5));
+    }
+
+    .transition-group.active .transition-label {
+      fill: #ffffff;
+      font-weight: 800;
+    }
+
+    @keyframes dashTravel {
+      to {
+        stroke-dashoffset: -18;
+      }
+    }
+
+    /* VERDICT BANNER */
+    .verdict-banner {
+      margin-top: 16px;
+      padding: 14px 18px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      transition: var(--transition);
+      border: 1px solid var(--border-subtle);
+      background: rgba(15, 23, 42, 0.7);
+    }
+
+    .verdict-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .verdict-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+      transition: var(--transition);
+    }
+
+    .verdict-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #f8fafc;
+    }
+
+    .verdict-subtitle {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .verdict-banner.status-accepted {
+      border-color: rgba(16, 185, 129, 0.5);
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(6, 78, 59, 0.2));
+      box-shadow: 0 0 25px rgba(16, 185, 129, 0.25);
+    }
+    .verdict-banner.status-accepted .verdict-icon {
+      background: var(--emerald-core);
+      color: #ffffff;
+      box-shadow: 0 0 16px rgba(16, 185, 129, 0.6);
+    }
+    .verdict-banner.status-accepted .verdict-title {
+      color: #34d399;
+    }
+
+    .verdict-banner.status-rejected {
+      border-color: rgba(244, 63, 94, 0.5);
+      background: linear-gradient(135deg, rgba(244, 63, 94, 0.15), rgba(136, 19, 55, 0.2));
+      box-shadow: 0 0 25px rgba(244, 63, 94, 0.25);
+    }
+    .verdict-banner.status-rejected .verdict-icon {
+      background: var(--rose-core);
+      color: #ffffff;
+      box-shadow: 0 0 16px rgba(244, 63, 94, 0.6);
+    }
+    .verdict-banner.status-rejected .verdict-title {
+      color: #fb7185;
+    }
+
+    .verdict-banner.status-running .verdict-icon {
+      background: rgba(56, 189, 248, 0.2);
+      color: #38bdf8;
+      animation: spinSlow 3s linear infinite;
+    }
+
+    @keyframes spinSlow {
+      100% { transform: rotate(360deg); }
+    }
+
+    /* CONTROLS & INPUT SECTION */
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .input-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .binary-input {
+      width: 100%;
+      background: rgba(10, 14, 26, 0.8);
+      border: 2px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 12px 42px 12px 16px;
+      color: #f8fafc;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      outline: none;
+      transition: var(--transition);
+    }
+
+    .binary-input:focus {
+      border-color: #38bdf8;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.25);
+    }
+
+    .binary-input::placeholder {
+      letter-spacing: normal;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .clear-btn {
+      position: absolute;
+      right: 12px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+
+    .clear-btn:hover {
+      color: #f8fafc;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* PRESETS */
+    .presets-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .preset-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-right: 2px;
+      letter-spacing: 0.05em;
+    }
+
+    .preset-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 5px 10px;
+      color: var(--text-secondary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: var(--transition);
+    }
+
+    .preset-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #f8fafc;
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .preset-btn.accept .indicator {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--emerald-core);
+    }
+
+    .preset-btn.reject .indicator {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--rose-core);
+    }
+
+    /* CONTROLS TOOLBAR */
+    .playback-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      background: rgba(10, 14, 26, 0.6);
+      padding: 12px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 9px 16px;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: var(--transition);
+      border: 1px solid transparent;
+      user-select: none;
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0ea5e9, #2563eb);
+      color: white;
+      box-shadow: 0 4px 14px rgba(14, 165, 233, 0.35);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      box-shadow: 0 6px 20px rgba(14, 165, 233, 0.55);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.06);
+      color: #f8fafc;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-danger {
+      background: rgba(244, 63, 94, 0.12);
+      color: #fda4af;
+      border: 1px solid rgba(244, 63, 94, 0.3);
+    }
+
+    .btn-danger:hover:not(:disabled) {
+      background: rgba(244, 63, 94, 0.22);
+      color: #fff;
+    }
+
+    .speed-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .speed-slider {
+      -webkit-appearance: none;
+      width: 80px;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 3px;
+      outline: none;
+    }
+
+    .speed-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #38bdf8;
+      cursor: pointer;
+      box-shadow: 0 0 6px rgba(56, 189, 248, 0.6);
+    }
+
+    /* TAPE DISPLAY */
+    .tape-container {
+      margin-top: 18px;
+      background: rgba(8, 11, 20, 0.9);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 16px 14px 14px;
+      position: relative;
+      overflow-x: auto;
+    }
+
+    .tape-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+
+    .tape-track-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 6px 4px 12px;
+      min-width: 100%;
+    }
+
+    .tape-track {
+      display: flex;
+      gap: 8px;
+      position: relative;
+      align-items: center;
+    }
+
+    .tape-cell {
+      width: 48px;
+      height: 54px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 2px solid var(--border-subtle);
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      position: relative;
+      transition: var(--transition);
+      flex-shrink: 0;
+    }
+
+    .tape-cell .cell-index {
+      position: absolute;
+      top: 3px;
+      font-size: 0.58rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .tape-cell.processed {
+      background: rgba(255, 255, 255, 0.015);
+      border-color: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .tape-cell.active {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: #38bdf8;
+      color: #ffffff;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+      transform: translateY(-4px);
+    }
+
+    .tape-cell.active::after {
+      content: '▲ HEAD';
+      position: absolute;
+      bottom: -20px;
+      font-size: 0.62rem;
+      font-weight: 800;
+      color: #38bdf8;
+      letter-spacing: 0.04em;
+    }
+
+    .tape-empty-msg {
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      font-style: italic;
+      padding: 8px 4px;
+    }
+
+    /* RIGHT COLUMN: TRACE TABLE & TABS */
+    .tabs-nav {
+      display: flex;
+      gap: 6px;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 12px;
+      margin-bottom: 14px;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 0.82rem;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .tab-btn:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .tab-btn.active {
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+    }
+
+    .tab-pane {
+      display: none;
+    }
+
+    .tab-pane.active {
+      display: block;
+    }
+
+    /* TRACE TABLE */
+    .table-wrapper {
+      max-height: 290px;
+      overflow-y: auto;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+      background: rgba(10, 14, 26, 0.6);
+    }
+
+    .trace-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      text-align: left;
+    }
+
+    .trace-table th {
+      background: rgba(18, 24, 40, 0.95);
+      position: sticky;
+      top: 0;
+      padding: 9px 10px;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-subtle);
+      z-index: 10;
+    }
+
+    .trace-table td {
+      padding: 9px 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      color: var(--text-secondary);
+    }
+
+    .trace-table tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .trace-table tr.current-step {
+      background: rgba(56, 189, 248, 0.12);
+      color: #ffffff;
+    }
+    .trace-table tr.current-step td {
+      color: #f8fafc;
+      font-weight: 700;
+    }
+
+    .state-badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-subtle);
+      color: #e2e8f0;
+    }
+
+    .state-badge.accept-badge {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: rgba(16, 185, 129, 0.3);
+      color: #34d399;
+    }
+
+    .symbol-badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 800;
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+    }
+
+    /* TRANSITION TABLE / FORMAL SPEC */
+    .formal-def-box {
+      background: rgba(10, 14, 26, 0.6);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      font-size: 0.82rem;
+      line-height: 1.5;
+      color: var(--text-secondary);
+      margin-bottom: 14px;
+    }
+
+    .formal-def-box code {
+      font-family: 'JetBrains Mono', monospace;
+      color: #38bdf8;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 2px 5px;
+      border-radius: 4px;
+    }
+
+    .formal-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      text-align: center;
+      background: rgba(10, 14, 26, 0.6);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .formal-table th, .formal-table td {
+      padding: 8px 10px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .formal-table th {
+      background: rgba(18, 24, 40, 0.95);
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+    }
+
+    .formal-table tr.highlight-row {
+      background: rgba(56, 189, 248, 0.12);
+    }
+
+    .formal-table td.highlight-cell {
+      background: rgba(56, 189, 248, 0.25);
+      color: #38bdf8;
+      font-weight: 800;
+      box-shadow: inset 0 0 8px rgba(56, 189, 248, 0.4);
+    }
+
+    /* BATCH TESTER */
+    .batch-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .batch-item {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 8px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .batch-item:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .tag-acc {
+      color: var(--emerald-core);
+      font-weight: 700;
+      font-size: 0.7rem;
+    }
+
+    .tag-rej {
+      color: var(--rose-core);
+      font-weight: 700;
+      font-size: 0.7rem;
+    }
+
+    /* FOOTER */
+    footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+    }
+    /* DIAGRAM LEGEND */
+    .diagram-legend {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .legend-indicator {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+
+    .legend-start {
+      color: #38bdf8;
+      font-size: 0.88rem;
+    }
+
+    .legend-accept {
+      color: var(--emerald-core);
+      font-size: 0.88rem;
+    }
+
+    .legend-active {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--cyan-core);
+      box-shadow: 0 0 6px var(--cyan-core);
+    }
+
+    /* INPUT HINT & VALIDATION */
+    .input-hint-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 6px;
+      font-size: 0.74rem;
+      min-height: 18px;
+    }
+
+    .input-hint {
+      color: var(--text-muted);
+      transition: color 0.2s ease;
+    }
+
+    .input-warning {
+      color: var(--rose-core);
+      font-weight: 600;
+      animation: shakeHint 0.3s ease-in-out;
+    }
+
+    @keyframes shakeHint {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
+
+    /* SHORTCUTS HINT */
+    .shortcuts-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+      padding: 9px 14px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      font-size: 0.74rem;
+      color: var(--text-muted);
+    }
+
+    .shortcuts-bar kbd {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-family: 'JetBrains Mono', monospace;
+      color: #cbd5e1;
+      font-size: 0.7rem;
+    }
+
+    /* BATCH TEST CONTROLS */
+    .batch-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .batch-summary-badge {
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: var(--emerald-core);
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- HEADER -->
+    <header>
+      <div class="header-badge">
+        <span class="pulse-dot"></span>
+        FLAT Automata Studio
+      </div>
+      <h1 id="main-title">Interactive DFA Simulator</h1>
+      <p id="main-subtitle" class="subtitle">
+        Visualizing formal language acceptance over alphabet <span class="formal-lang">&Sigma; = {0, 1}</span>.
+      </p>
+    </header>
+
+    <!-- MACHINE SELECTOR BAR -->
+    <div class="machine-selector-card">
+      <div class="selector-top-row">
+        <div class="selector-label">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+          <span>Select Automaton Machine:</span>
+        </div>
+        <span id="machine-category-badge" style="font-size: 0.75rem; color: #38bdf8; font-weight: 600;">Category: Pattern Matching</span>
+      </div>
+
+      <div class="machine-pills" id="machine-pills-container">
+        <!-- Machine pills populated via JS -->
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="dashboard-grid">
+      
+      <!-- LEFT COLUMN: DIAGRAM & CONTROLS -->
+      <div style="display: flex; flex-direction: column; gap: 20px;">
+        
+        <!-- SVG STATE DIAGRAM -->
+        <div class="card">
+          <div class="card-title">
+            <div class="icon-badge">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"></circle><circle cx="18" cy="18" r="3"></circle><circle cx="18" cy="6" r="3"></circle><line x1="8.59" y1="7.41" x2="15.42" y2="16.59"></line><line x1="8.59" y1="4.59" x2="15.42" y2="4.59"></line></svg>
+              <span id="diagram-title">State Transition Diagram</span>
+            </div>
+            <div class="diagram-legend">
+              <span class="legend-item"><span class="legend-indicator legend-start">&rarr;</span> Start</span>
+              <span class="legend-item"><span class="legend-indicator legend-accept">&#9678;</span> Accept</span>
+              <span class="legend-item"><span class="legend-indicator legend-active"></span> Active</span>
+            </div>
+          </div>
+
+          <div class="svg-container">
+            <svg id="dfa-svg" class="dfa-svg" viewBox="0 0 840 330" preserveAspectRatio="xMidYMid meet">
+              <defs>
+                <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#475569"></path>
+                </marker>
+                <marker id="arrow-active" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#00f2fe"></path>
+                </marker>
+              </defs>
+
+              <g id="svg-transitions-layer"></g>
+              <g id="svg-states-layer"></g>
+            </svg>
+          </div>
+
+          <!-- VERDICT BANNER -->
+          <div id="verdict-banner" class="verdict-banner status-ready">
+            <div class="verdict-content">
+              <div id="verdict-icon" class="verdict-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
+              </div>
+              <div>
+                <div id="verdict-title" class="verdict-title">Ready to Simulate</div>
+                <div id="verdict-subtitle" class="verdict-subtitle">Enter a binary string and click Step or Auto Play.</div>
+              </div>
+            </div>
+            <div id="state-indicator-badge" class="state-badge" style="font-size: 0.88rem; padding: 6px 12px;">
+              Current: <strong id="current-state-text" style="color: #38bdf8;">q0</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- INPUTS & TAPE CARD -->
+        <div class="card">
+          <div class="card-title">
+            <div class="icon-badge">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+              <span>Input & Tape Controller</span>
+            </div>
+          </div>
+
+          <!-- Input row -->
+          <div class="input-group">
+            <div class="input-label-row">
+              <span id="input-alphabet-label">Binary Input String &Sigma;* &isin; {0, 1}*</span>
+              <span id="string-len-counter">Length: 4</span>
+            </div>
+            <div class="input-wrapper">
+              <input type="text" id="binary-input" class="binary-input" value="1001" placeholder="Type input string..." maxlength="28" spellcheck="false" autocomplete="off" />
+              <button id="btn-clear" class="clear-btn" title="Clear input" aria-label="Clear input">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+              </button>
+            </div>
+            <div class="input-hint-row">
+              <span id="input-validation-hint" class="input-hint">Alphabet: &Sigma; = {0, 1} &bull; Empty string &epsilon; supported</span>
+              <span id="input-validity-status" style="font-size: 0.72rem; color: var(--emerald-core); font-weight: 600;">Valid Input</span>
+            </div>
+          </div>
+
+          <!-- Presets -->
+          <div class="presets-row" id="presets-container">
+            <!-- Preset buttons loaded dynamically -->
+          </div>
+
+          <!-- Controls Toolbar -->
+          <div class="playback-controls">
+            <button id="btn-play-pause" class="btn btn-primary" title="Toggle Auto Play / Pause (Space)">
+              <svg id="play-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              <span id="play-btn-text">Auto Play</span>
+            </button>
+            <button id="btn-step" class="btn btn-secondary" title="Step Forward (Right Arrow)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>
+              <span>Step</span>
+            </button>
+            <button id="btn-reset" class="btn btn-danger" title="Reset Simulation (R)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+              <span>Reset</span>
+            </button>
+
+            <div class="speed-control">
+              <span>Speed:</span>
+              <input type="range" id="speed-slider" class="speed-slider" min="200" max="1600" step="100" value="800" title="Adjust playback speed" />
+              <span id="speed-label" style="font-family: 'JetBrains Mono', monospace; min-width: 40px;">0.8s</span>
+            </div>
+          </div>
+
+          <!-- Shortcuts Bar -->
+          <div class="shortcuts-bar">
+            <span><kbd>Space</kbd> Auto Play / Pause</span>
+            <span><kbd>&rarr;</kbd> Step Forward</span>
+            <span><kbd>R</kbd> Reset</span>
+            <span><kbd>Enter</kbd> Simulate</span>
+          </div>
+
+          <!-- TAPE DISPLAY -->
+          <div class="tape-container">
+            <div class="tape-header">
+              <span>Input Tape Filmstrip</span>
+              <span id="tape-status-text">Head Position: 0 / 4</span>
+            </div>
+            <div class="tape-track-wrapper">
+              <div id="tape-track" class="tape-track"></div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: TRACE TABLE, FORMAL SPEC & BATCH TESTS -->
+      <div style="display: flex; flex-direction: column; gap: 20px;">
+        
+        <div class="card" style="height: 100%; display: flex; flex-direction: column;">
+          <div class="tabs-nav">
+            <button class="tab-btn active" data-tab="tab-trace">Execution Trace</button>
+            <button class="tab-btn" data-tab="tab-table">Formal Spec (&delta;)</button>
+            <button class="tab-btn" data-tab="tab-batch">Batch Tests</button>
+          </div>
+
+          <!-- TAB 1: EXECUTION TRACE -->
+          <div id="tab-trace" class="tab-pane active" style="flex: 1;">
+            <div class="table-wrapper">
+              <table class="trace-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>State</th>
+                    <th>Input</th>
+                    <th>&delta;(q, &sigma;)</th>
+                    <th>Next</th>
+                  </tr>
+                </thead>
+                <tbody id="trace-tbody"></tbody>
+              </table>
+            </div>
+            <p style="margin-top: 10px; font-size: 0.76rem; color: var(--text-muted); line-height: 1.4;">
+              * Trace records sequential deterministic state transitions until tape end.
+            </p>
+          </div>
+
+          <!-- TAB 2: TRANSITION TABLE & FORMAL SPEC -->
+          <div id="tab-table" class="tab-pane">
+            <div class="formal-def-box" id="formal-def-box">
+              <!-- Rendered via JS -->
+            </div>
+
+            <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px;">
+              Transition Function &delta; Matrix:
+            </div>
+            <div id="formal-table-container">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- TAB 3: BATCH TESTER -->
+          <div id="tab-batch" class="tab-pane">
+            <div class="batch-header-row">
+              <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600;">
+                Click any string to load, or verify all test cases:
+              </span>
+              <button id="btn-run-all-tests" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.78rem;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span>Run All Tests</span>
+              </button>
+            </div>
+            <div id="batch-summary-container" style="display: none; margin-bottom: 12px;"></div>
+            <div class="batch-grid" id="batch-grid-container">
+              <!-- Batch tests loaded dynamically -->
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+      AutomataLab &bull; Interactive Formal Languages & Automata Theory (FLAT) Simulator Suite
+    </footer>
+  </div>
+
+  <!-- JAVASCRIPT SIMULATOR ENGINE & MULTI-MACHINE SUITE -->
+  <script>
+    // --- MULTI-MACHINE CATALOG ---
+    const MACHINES = {
+      'ends_with_01': {
+        id: 'ends_with_01',
+        name: 'Ends with "01"',
+        tag: 'DFA • 3 States',
+        category: 'Pattern Matching',
+        alphabet: ['0', '1'],
+        regex: '(0|1)*01',
+        description: 'Recognizes all binary strings ending with pattern "01".',
+        formal: 'L = { w ∈ {0, 1}* | w ends with "01" }',
+        startState: 'q0',
+        acceptStates: ['q2'],
+        states: [
+          { id: 'q0', label: 'q0', x: 170, y: 160, isStart: true, isAccept: false, desc: 'Initial' },
+          { id: 'q1', label: 'q1', x: 420, y: 160, isStart: false, isAccept: false, desc: "Saw '0'" },
+          { id: 'q2', label: 'q2', x: 670, y: 160, isStart: false, isAccept: true, desc: "Ends '01'" }
+        ],
+        transitions: {
+          'q0': { '0': 'q1', '1': 'q0' },
+          'q1': { '0': 'q1', '1': 'q2' },
+          'q2': { '0': 'q1', '1': 'q0' }
+        },
+        svgTransitions: [
+          { id: 'trans-start', from: null, to: 'q0', path: 'M 70 160 L 138 160', label: 'Start', labelPos: {x: 95, y: 146} },
+          { id: 'trans-q0-1', from: 'q0', symbol: '1', to: 'q0', path: 'M 152 130 C 130 55, 210 55, 188 130', label: '1', labelPos: {x: 171, y: 63} },
+          { id: 'trans-q0-0', from: 'q0', symbol: '0', to: 'q1', path: 'M 204 150 Q 295 125 384 150', label: '0', labelPos: {x: 297, y: 132} },
+          { id: 'trans-q1-0', from: 'q1', symbol: '0', to: 'q1', path: 'M 402 130 C 380 55, 460 55, 438 130', label: '0', labelPos: {x: 421, y: 63} },
+          { id: 'trans-q1-1', from: 'q1', symbol: '1', to: 'q2', path: 'M 454 150 Q 545 125 634 150', label: '1', labelPos: {x: 547, y: 132} },
+          { id: 'trans-q2-0', from: 'q2', symbol: '0', to: 'q1', path: 'M 640 180 Q 545 220 456 180', label: '0', labelPos: {x: 547, y: 207} },
+          { id: 'trans-q2-1', from: 'q2', symbol: '1', to: 'q0', path: 'M 655 194 Q 420 315 186 194', label: '1', labelPos: {x: 421, y: 289} }
+        ],
+        defaultInput: '1001',
+        presets: [
+          { str: '1001', accept: true },
+          { str: '01', accept: true },
+          { str: '110101', accept: true },
+          { str: '1100', accept: false },
+          { str: '0', accept: false },
+          { str: '111', accept: false },
+          { str: '', accept: false }
+        ],
+        batchTests: [
+          { str: '01', accept: true },
+          { str: '101', accept: true },
+          { str: '1001', accept: true },
+          { str: '00101', accept: true },
+          { str: '110101', accept: true },
+          { str: '0001', accept: true },
+          { str: '0', accept: false },
+          { str: '1', accept: false },
+          { str: '10', accept: false },
+          { str: '100', accept: false },
+          { str: '1100', accept: false },
+          { str: '1010', accept: false }
+        ]
+      },
+
+      'contains_101': {
+        id: 'contains_101',
+        name: 'Contains Substring "101"',
+        tag: 'DFA • 4 States',
+        category: 'Substring Detection',
+        alphabet: ['0', '1'],
+        regex: '(0|1)*101(0|1)*',
+        description: 'Recognizes strings containing "101" anywhere.',
+        formal: 'L = { w ∈ {0, 1}* | w contains substring "101" }',
+        startState: 'q0',
+        acceptStates: ['q3'],
+        states: [
+          { id: 'q0', label: 'q0', x: 120, y: 160, isStart: true, isAccept: false, desc: 'Initial' },
+          { id: 'q1', label: 'q1', x: 320, y: 160, isStart: false, isAccept: false, desc: "Saw '1'" },
+          { id: 'q2', label: 'q2', x: 520, y: 160, isStart: false, isAccept: false, desc: "Saw '10'" },
+          { id: 'q3', label: 'q3', x: 720, y: 160, isStart: false, isAccept: true, desc: "Found '101'" }
+        ],
+        transitions: {
+          'q0': { '0': 'q0', '1': 'q1' },
+          'q1': { '0': 'q2', '1': 'q1' },
+          'q2': { '0': 'q0', '1': 'q3' },
+          'q3': { '0': 'q3', '1': 'q3' }
+        },
+        svgTransitions: [
+          { id: 'trans-start', from: null, to: 'q0', path: 'M 40 160 L 88 160', label: 'Start', labelPos: {x: 60, y: 146} },
+          { id: 'trans-q0-0', from: 'q0', symbol: '0', to: 'q0', path: 'M 102 130 C 80 55, 160 55, 138 130', label: '0', labelPos: {x: 121, y: 63} },
+          { id: 'trans-q0-1', from: 'q0', symbol: '1', to: 'q1', path: 'M 154 150 Q 220 130 286 150', label: '1', labelPos: {x: 220, y: 133} },
+          { id: 'trans-q1-1', from: 'q1', symbol: '1', to: 'q1', path: 'M 302 130 C 280 55, 360 55, 338 130', label: '1', labelPos: {x: 321, y: 63} },
+          { id: 'trans-q1-0', from: 'q1', symbol: '0', to: 'q2', path: 'M 354 150 Q 420 130 486 150', label: '0', labelPos: {x: 420, y: 133} },
+          { id: 'trans-q2-1', from: 'q2', symbol: '1', to: 'q3', path: 'M 554 150 Q 620 130 686 150', label: '1', labelPos: {x: 620, y: 133} },
+          { id: 'trans-q2-0', from: 'q2', symbol: '0', to: 'q0', path: 'M 505 185 Q 320 280 135 185', label: '0', labelPos: {x: 320, y: 255} },
+          { id: 'trans-q3-0-1', from: 'q3', symbol: '0,1', to: 'q3', path: 'M 702 130 C 680 55, 760 55, 738 130', label: '0, 1', labelPos: {x: 721, y: 63} }
+        ],
+        defaultInput: '011010',
+        presets: [
+          { str: '101', accept: true },
+          { str: '011010', accept: true },
+          { str: '00101', accept: true },
+          { str: '1100', accept: false },
+          { str: '1001', accept: false },
+          { str: '111', accept: false }
+        ],
+        batchTests: [
+          { str: '101', accept: true },
+          { str: '0101', accept: true },
+          { str: '11010', accept: true },
+          { str: '001011', accept: true },
+          { str: '100', accept: false },
+          { str: '10', accept: false },
+          { str: '1110', accept: false },
+          { str: '000', accept: false }
+        ]
+      },
+
+      'mod3_binary': {
+        id: 'mod3_binary',
+        name: 'Binary Divisible by 3',
+        tag: 'DFA • 3 States',
+        category: 'Modulo Arithmetic',
+        alphabet: ['0', '1'],
+        regex: '(0|1(01*0)*1)*',
+        description: 'Accepts binary strings whose integer value is divisible by 3 (value % 3 == 0). Canonical regular expression: (0|1(01*0)*1)*',
+        formal: 'L = { w ∈ {0, 1}* | bin2dec(w) ≡ 0 (mod 3) }',
+        startState: 'r0',
+        acceptStates: ['r0'],
+        states: [
+          { id: 'r0', label: 'r0', x: 170, y: 160, isStart: true, isAccept: true, desc: 'Rem = 0' },
+          { id: 'r1', label: 'r1', x: 420, y: 160, isStart: false, isAccept: false, desc: 'Rem = 1' },
+          { id: 'r2', label: 'r2', x: 670, y: 160, isStart: false, isAccept: false, desc: 'Rem = 2' }
+        ],
+        transitions: {
+          'r0': { '0': 'r0', '1': 'r1' },
+          'r1': { '0': 'r2', '1': 'r0' },
+          'r2': { '0': 'r1', '1': 'r2' }
+        },
+        svgTransitions: [
+          { id: 'trans-start', from: null, to: 'r0', path: 'M 70 160 L 138 160', label: 'Start', labelPos: {x: 95, y: 146} },
+          { id: 'trans-r0-0', from: 'r0', symbol: '0', to: 'r0', path: 'M 152 130 C 130 55, 210 55, 188 130', label: '0', labelPos: {x: 171, y: 63} },
+          { id: 'trans-r0-1', from: 'r0', symbol: '1', to: 'r1', path: 'M 204 150 Q 295 125 384 150', label: '1', labelPos: {x: 297, y: 132} },
+          { id: 'trans-r1-1', from: 'r1', symbol: '1', to: 'r0', path: 'M 386 175 Q 295 200 204 175', label: '1', labelPos: {x: 295, y: 200} },
+          { id: 'trans-r1-0', from: 'r1', symbol: '0', to: 'r2', path: 'M 454 150 Q 545 125 634 150', label: '0', labelPos: {x: 547, y: 132} },
+          { id: 'trans-r2-0', from: 'r2', symbol: '0', to: 'r1', path: 'M 636 175 Q 545 200 454 175', label: '0', labelPos: {x: 545, y: 200} },
+          { id: 'trans-r2-1', from: 'r2', symbol: '1', to: 'r2', path: 'M 652 130 C 630 55, 710 55, 688 130', label: '1', labelPos: {x: 671, y: 63} }
+        ],
+        defaultInput: '110',
+        presets: [
+          { str: '0', accept: true },
+          { str: '11', accept: true },
+          { str: '110', accept: true },
+          { str: '1001', accept: true },
+          { str: '10101', accept: true },
+          { str: '1100', accept: true },
+          { str: '', accept: true },
+          { str: '1', accept: false },
+          { str: '10', accept: false },
+          { str: '100', accept: false }
+        ],
+        batchTests: [
+          { str: '', accept: true },
+          { str: '0', accept: true },
+          { str: '11', accept: true },
+          { str: '110', accept: true },
+          { str: '1001', accept: true },
+          { str: '10101', accept: true },
+          { str: '1100', accept: true },
+          { str: '1111', accept: true },
+          { str: '1', accept: false },
+          { str: '10', accept: false },
+          { str: '100', accept: false },
+          { str: '101', accept: false },
+          { str: '111', accept: false },
+          { str: '1000', accept: false }
+        ]
+      },
+
+      'even_0_even_1': {
+        id: 'even_0_even_1',
+        name: 'Even 0s & Even 1s (Parity)',
+        tag: 'DFA • 4 States',
+        category: 'Parity / Modulo-2',
+        alphabet: ['0', '1'],
+        regex: '((00|11)|(01|10)(00|11)*(01|10))*',
+        description: 'Accepts strings containing both an even count of 0s and an even count of 1s.',
+        formal: 'L = { w ∈ {0, 1}* | count(0) mod 2 = 0 ∧ count(1) mod 2 = 0 }',
+        startState: 'qEE',
+        acceptStates: ['qEE'],
+        states: [
+          { id: 'qEE', label: 'qEE', x: 260, y: 110, isStart: true, isAccept: true, desc: 'Even 0, Even 1' },
+          { id: 'qOE', label: 'qOE', x: 580, y: 110, isStart: false, isAccept: false, desc: 'Odd 0, Even 1' },
+          { id: 'qEO', label: 'qEO', x: 260, y: 240, isStart: false, isAccept: false, desc: 'Even 0, Odd 1' },
+          { id: 'qOO', label: 'qOO', x: 580, y: 240, isStart: false, isAccept: false, desc: 'Odd 0, Odd 1' }
+        ],
+        transitions: {
+          'qEE': { '0': 'qOE', '1': 'qEO' },
+          'qOE': { '0': 'qEE', '1': 'qOO' },
+          'qEO': { '0': 'qOO', '1': 'qEE' },
+          'qOO': { '0': 'qEO', '1': 'qOE' }
+        },
+        svgTransitions: [
+          { id: 'trans-start', from: null, to: 'qEE', path: 'M 160 110 L 226 110', label: 'Start', labelPos: {x: 185, y: 96} },
+          { id: 'trans-qEE-0', from: 'qEE', symbol: '0', to: 'qOE', path: 'M 294 100 Q 420 80 546 100', label: '0', labelPos: {x: 420, y: 80} },
+          { id: 'trans-qOE-0', from: 'qOE', symbol: '0', to: 'qEE', path: 'M 546 120 Q 420 140 294 120', label: '0', labelPos: {x: 420, y: 138} },
+          { id: 'trans-qEE-1', from: 'qEE', symbol: '1', to: 'qEO', path: 'M 250 144 Q 230 175 250 206', label: '1', labelPos: {x: 232, y: 175} },
+          { id: 'trans-qEO-1', from: 'qEO', symbol: '1', to: 'qEE', path: 'M 270 206 Q 290 175 270 144', label: '1', labelPos: {x: 288, y: 175} },
+          { id: 'trans-qOE-1', from: 'qOE', symbol: '1', to: 'qOO', path: 'M 570 144 Q 550 175 570 206', label: '1', labelPos: {x: 552, y: 175} },
+          { id: 'trans-qOO-1', from: 'qOO', symbol: '1', to: 'qOE', path: 'M 590 206 Q 610 175 590 144', label: '1', labelPos: {x: 608, y: 175} },
+          { id: 'trans-qEO-0', from: 'qEO', symbol: '0', to: 'qOO', path: 'M 294 230 Q 420 210 546 230', label: '0', labelPos: {x: 420, y: 210} },
+          { id: 'trans-qOO-0', from: 'qOO', symbol: '0', to: 'qEO', path: 'M 546 250 Q 420 270 294 250', label: '0', labelPos: {x: 420, y: 268} }
+        ],
+        defaultInput: '0011',
+        presets: [
+          { str: '0011', accept: true },
+          { str: '0101', accept: true },
+          { str: '1100', accept: true },
+          { str: '00', accept: true },
+          { str: '11', accept: true },
+          { str: '', accept: true },
+          { str: '0', accept: false },
+          { str: '1', accept: false },
+          { str: '001', accept: false }
+        ],
+        batchTests: [
+          { str: '', accept: true },
+          { str: '00', accept: true },
+          { str: '11', accept: true },
+          { str: '0011', accept: true },
+          { str: '0101', accept: true },
+          { str: '0110', accept: true },
+          { str: '0', accept: false },
+          { str: '1', accept: false },
+          { str: '01', accept: false },
+          { str: '001', accept: false },
+          { str: '110', accept: false },
+          { str: '111', accept: false }
+        ]
+      },
+
+      'no_consecutive_11': {
+        id: 'no_consecutive_11',
+        name: 'No Consecutive "11"',
+        tag: 'DFA • 3 States',
+        category: 'Constraint / Trap State',
+        alphabet: ['0', '1'],
+        regex: '(0|10)*(1|ε)',
+        description: 'Accepts all binary strings that never contain consecutive ones ("11").',
+        formal: 'L = { w ∈ {0, 1}* | w does not contain substring "11" }',
+        startState: 'q0',
+        acceptStates: ['q0', 'q1'],
+        states: [
+          { id: 'q0', label: 'q0', x: 170, y: 160, isStart: true, isAccept: true, desc: 'Ends with 0/Start' },
+          { id: 'q1', label: 'q1', x: 420, y: 160, isStart: false, isAccept: true, desc: 'Ends with 1' },
+          { id: 'qTrap', label: 'qTrap', x: 670, y: 160, isStart: false, isAccept: false, desc: 'Dead (Saw 11)' }
+        ],
+        transitions: {
+          'q0': { '0': 'q0', '1': 'q1' },
+          'q1': { '0': 'q0', '1': 'qTrap' },
+          'qTrap': { '0': 'qTrap', '1': 'qTrap' }
+        },
+        svgTransitions: [
+          { id: 'trans-start', from: null, to: 'q0', path: 'M 70 160 L 138 160', label: 'Start', labelPos: {x: 95, y: 146} },
+          { id: 'trans-q0-0', from: 'q0', symbol: '0', to: 'q0', path: 'M 152 130 C 130 55, 210 55, 188 130', label: '0', labelPos: {x: 171, y: 63} },
+          { id: 'trans-q0-1', from: 'q0', symbol: '1', to: 'q1', path: 'M 204 150 Q 295 125 384 150', label: '1', labelPos: {x: 297, y: 132} },
+          { id: 'trans-q1-0', from: 'q1', symbol: '0', to: 'q0', path: 'M 386 175 Q 295 200 204 175', label: '0', labelPos: {x: 295, y: 200} },
+          { id: 'trans-q1-1', from: 'q1', symbol: '1', to: 'qTrap', path: 'M 454 150 Q 545 125 634 150', label: '1', labelPos: {x: 547, y: 132} },
+          { id: 'trans-qTrap-0-1', from: 'qTrap', symbol: '0,1', to: 'qTrap', path: 'M 652 130 C 630 55, 710 55, 688 130', label: '0, 1', labelPos: {x: 671, y: 63} }
+        ],
+        defaultInput: '101001',
+        presets: [
+          { str: '101001', accept: true },
+          { str: '010', accept: true },
+          { str: '10101', accept: true },
+          { str: '0000', accept: true },
+          { str: '11', accept: false },
+          { str: '10110', accept: false },
+          { str: '01110', accept: false }
+        ],
+        batchTests: [
+          { str: '', accept: true },
+          { str: '0', accept: true },
+          { str: '1', accept: true },
+          { str: '10', accept: true },
+          { str: '010', accept: true },
+          { str: '10101', accept: true },
+          { str: '11', accept: false },
+          { str: '110', accept: false },
+          { str: '011', accept: false },
+          { str: '10110', accept: false }
+        ]
+      }
+    };
+
+    // --- APPLICATION STATE ---
+    let currentMachineId = 'ends_with_01';
+    let currentMachine = MACHINES[currentMachineId];
+    let inputString = currentMachine.defaultInput;
+    let tapeIndex = 0;
+    let currentState = currentMachine.startState;
+    let executionHistory = [];
+    let isPlaying = false;
+    let playIntervalId = null;
+    let stepDelay = 800; // ms
+
+    // --- DOM REFERENCES ---
+    const machinePillsContainer = document.getElementById('machine-pills-container');
+    const machineCategoryBadge = document.getElementById('machine-category-badge');
+    const mainTitle = document.getElementById('main-title');
+    const mainSubtitle = document.getElementById('main-subtitle');
+    const diagramTitle = document.getElementById('diagram-title');
+    const svgTransitionsLayer = document.getElementById('svg-transitions-layer');
+    const svgStatesLayer = document.getElementById('svg-states-layer');
+
+    const binaryInput = document.getElementById('binary-input');
+    const inputValidationHint = document.getElementById('input-validation-hint');
+    const inputValidityStatus = document.getElementById('input-validity-status');
+    const btnClear = document.getElementById('btn-clear');
+    const btnPlayPause = document.getElementById('btn-play-pause');
+    const playBtnText = document.getElementById('play-btn-text');
+    const playIcon = document.getElementById('play-icon');
+    const btnStep = document.getElementById('btn-step');
+    const btnReset = document.getElementById('btn-reset');
+    const speedSlider = document.getElementById('speed-slider');
+    const speedLabel = document.getElementById('speed-label');
+    const stringLenCounter = document.getElementById('string-len-counter');
+    const presetsContainer = document.getElementById('presets-container');
+    const batchGridContainer = document.getElementById('batch-grid-container');
+    const btnRunAllTests = document.getElementById('btn-run-all-tests');
+    const batchSummaryContainer = document.getElementById('batch-summary-container');
+    const tapeTrack = document.getElementById('tape-track');
+    const tapeStatusText = document.getElementById('tape-status-text');
+    const traceTbody = document.getElementById('trace-tbody');
+    const verdictBanner = document.getElementById('verdict-banner');
+    const verdictTitle = document.getElementById('verdict-title');
+    const verdictSubtitle = document.getElementById('verdict-subtitle');
+    const verdictIcon = document.getElementById('verdict-icon');
+    const currentStateText = document.getElementById('current-state-text');
+    const formalDefBox = document.getElementById('formal-def-box');
+    const formalTableContainer = document.getElementById('formal-table-container');
+
+    let warningTimeout = null;
+
+    // --- INITIALIZATION ---
+    function init() {
+      renderMachineSelector();
+      setupEventListeners();
+      loadMachine(currentMachineId);
+    }
+
+    function renderMachineSelector() {
+      machinePillsContainer.innerHTML = '';
+      Object.values(MACHINES).forEach(mach => {
+        const pill = document.createElement('div');
+        pill.className = `machine-pill ${mach.id === currentMachineId ? 'active' : ''}`;
+        pill.setAttribute('data-id', mach.id);
+        pill.setAttribute('role', 'button');
+        pill.setAttribute('tabindex', '0');
+        pill.innerHTML = `
+          <span>${mach.name}</span>
+          <span class="tag">${mach.tag}</span>
+        `;
+        pill.addEventListener('click', () => {
+          loadMachine(mach.id);
+        });
+        pill.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            loadMachine(mach.id);
+          }
+        });
+        machinePillsContainer.appendChild(pill);
+      });
+    }
+
+    function loadMachine(machineId) {
+      stopAutoPlay();
+      clearInputWarning();
+      if (batchSummaryContainer) {
+        batchSummaryContainer.style.display = 'none';
+      }
+
+      currentMachineId = machineId;
+      currentMachine = MACHINES[machineId];
+
+      // Update Active Pill
+      document.querySelectorAll('.machine-pill').forEach(p => {
+        p.classList.toggle('active', p.getAttribute('data-id') === machineId);
+      });
+
+      // Update Titles & Badges
+      machineCategoryBadge.textContent = `Category: ${currentMachine.category}`;
+      mainTitle.textContent = `${currentMachine.name} Simulator`;
+      mainSubtitle.innerHTML = `Visualizing <span class="formal-lang">${currentMachine.formal}</span> with Regex: <code style="color: #cbd5e1; font-family: 'JetBrains Mono', monospace;">${currentMachine.regex}</code>`;
+      diagramTitle.textContent = `${currentMachine.name} — SVG Graph`;
+
+      // Set Input
+      binaryInput.value = currentMachine.defaultInput;
+      inputString = currentMachine.defaultInput;
+      stringLenCounter.textContent = `Length: ${inputString.length}`;
+
+      // Render Machine-Specific Components
+      renderPresets();
+      renderBatchTests();
+      renderFormalSpec();
+      renderSVGDiagram();
+
+      // Reset Simulation State
+      resetSimulation();
+    }
+
+    function renderPresets() {
+      presetsContainer.innerHTML = '<span class="preset-label">Presets:</span>';
+      currentMachine.presets.forEach(p => {
+        const btn = document.createElement('button');
+        btn.className = `preset-btn ${p.accept ? 'accept' : 'reject'}`;
+        btn.innerHTML = `<span class="indicator"></span> ${p.str === '' ? '&epsilon; (Empty)' : p.str} (${p.accept ? 'Acc' : 'Rej'})`;
+        btn.addEventListener('click', () => {
+          clearInputWarning();
+          binaryInput.value = p.str;
+          inputString = p.str;
+          stringLenCounter.textContent = `Length: ${inputString.length}`;
+          resetSimulation();
+        });
+        presetsContainer.appendChild(btn);
+      });
+    }
+
+    function renderBatchTests() {
+      batchGridContainer.innerHTML = '';
+      if (batchSummaryContainer) batchSummaryContainer.style.display = 'none';
+
+      currentMachine.batchTests.forEach(test => {
+        const item = document.createElement('div');
+        item.className = 'batch-item';
+        item.setAttribute('role', 'button');
+        item.setAttribute('tabindex', '0');
+        item.title = `Click to load "${test.str === '' ? 'ε (empty string)' : test.str}"`;
+        item.innerHTML = `
+          <span>${test.str === '' ? '&epsilon; (Empty)' : test.str}</span>
+          <span class="${test.accept ? 'tag-acc' : 'tag-rej'}">${test.accept ? 'ACCEPTED' : 'REJECTED'}</span>
+        `;
+        const loadTest = () => {
+          clearInputWarning();
+          binaryInput.value = test.str;
+          inputString = test.str;
+          stringLenCounter.textContent = `Length: ${inputString.length}`;
+          resetSimulation();
+        };
+        item.addEventListener('click', loadTest);
+        item.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            loadTest();
+          }
+        });
+        batchGridContainer.appendChild(item);
+      });
+    }
+
+    function renderFormalSpec() {
+      const stateList = currentMachine.states.map(s => s.label).join(', ');
+      const acceptList = currentMachine.acceptStates.join(', ');
+      
+      formalDefBox.innerHTML = `
+        <div style="font-weight: 700; color: #f8fafc; margin-bottom: 6px;">Formal 5-Tuple: M = (Q, &Sigma;, &delta;, q0, F)</div>
+        <div>&bull; <strong>Q (States):</strong> <code>{${stateList}}</code></div>
+        <div>&bull; <strong>&Sigma; (Alphabet):</strong> <code>{${currentMachine.alphabet.join(', ')}}</code></div>
+        <div>&bull; <strong>q0 (Start State):</strong> <code>${currentMachine.startState}</code></div>
+        <div>&bull; <strong>F (Accepting):</strong> <code>{${acceptList}}</code></div>
+        <div>&bull; <strong>Regular Exp:</strong> <code>${currentMachine.regex}</code></div>
+      `;
+
+      // Render Matrix Table
+      let tableHtml = `
+        <table class="formal-table">
+          <thead>
+            <tr>
+              <th>State (q)</th>
+              ${currentMachine.alphabet.map(a => `<th>Input '${a}'</th>`).join('')}
+              <th>Type</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      currentMachine.states.forEach(state => {
+        const isStart = state.id === currentMachine.startState;
+        const isAccept = currentMachine.acceptStates.includes(state.id);
+        const prefix = (isStart ? '&rarr; ' : '') + (isAccept ? '&lowast; ' : '');
+        
+        tableHtml += `<tr id="row-${state.id}">
+          <td style="${isAccept ? 'color: var(--emerald-core); font-weight: 700;' : ''}"><strong>${prefix}${state.label}</strong></td>`;
+        
+        currentMachine.alphabet.forEach(sym => {
+          const next = (currentMachine.transitions[state.id] && currentMachine.transitions[state.id][sym]) || '-';
+          tableHtml += `<td id="cell-${state.id}-${sym}">${next}</td>`;
+        });
+
+        tableHtml += `<td style="color: ${isAccept ? 'var(--emerald-core)' : 'var(--text-muted)'}; font-size: 0.74rem;">${state.desc}</td></tr>`;
+      });
+
+      tableHtml += `</tbody></table>`;
+      formalTableContainer.innerHTML = tableHtml;
+    }
+
+    function renderSVGDiagram() {
+      svgTransitionsLayer.innerHTML = '';
+      svgStatesLayer.innerHTML = '';
+
+      // 1. Draw Transitions
+      currentMachine.svgTransitions.forEach(trans => {
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('id', trans.id);
+        g.setAttribute('class', 'transition-group');
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('class', 'transition-path');
+        path.setAttribute('d', trans.path);
+        path.setAttribute('marker-end', 'url(#arrow)');
+        g.appendChild(path);
+
+        if (trans.label && trans.labelPos) {
+          const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          rect.setAttribute('class', 'transition-label-bg');
+          rect.setAttribute('x', trans.labelPos.x - 12);
+          rect.setAttribute('y', trans.labelPos.y - 11);
+          rect.setAttribute('width', trans.label.length > 2 ? 30 : 24);
+          rect.setAttribute('height', 20);
+          g.appendChild(rect);
+
+          const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          text.setAttribute('class', 'transition-label');
+          text.setAttribute('x', trans.labelPos.x + (trans.label.length > 2 ? 3 : 0));
+          text.setAttribute('y', trans.labelPos.y);
+          text.textContent = trans.label;
+          g.appendChild(text);
+        }
+
+        svgTransitionsLayer.appendChild(g);
+      });
+
+      // 2. Draw State Nodes
+      currentMachine.states.forEach(st => {
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('id', `node-${st.id}`);
+        g.setAttribute('class', 'state-node');
+        g.setAttribute('transform', `translate(${st.x}, ${st.y})`);
+
+        // Outer circle
+        const outer = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        outer.setAttribute('class', 'state-circle-outer');
+        outer.setAttribute('cx', '0');
+        outer.setAttribute('cy', '0');
+        outer.setAttribute('r', '34');
+        g.appendChild(outer);
+
+        // Inner circle if accept
+        if (st.isAccept) {
+          const inner = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          inner.setAttribute('class', 'state-circle-inner');
+          inner.setAttribute('cx', '0');
+          inner.setAttribute('cy', '0');
+          inner.setAttribute('r', '27');
+          g.appendChild(inner);
+        }
+
+        // State Text
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('class', 'state-text');
+        text.setAttribute('x', '0');
+        text.setAttribute('y', '0');
+        text.textContent = st.label;
+        g.appendChild(text);
+
+        // State desc
+        const desc = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        desc.setAttribute('class', 'state-desc-text');
+        desc.setAttribute('x', '0');
+        desc.setAttribute('y', '46');
+        desc.textContent = st.desc;
+        g.appendChild(desc);
+
+        svgStatesLayer.appendChild(g);
+      });
+    }
+
+    // --- INPUT VALIDATION HELPERS ---
+    function showInputWarning(msg) {
+      if (inputValidationHint) {
+        inputValidationHint.textContent = msg;
+        inputValidationHint.className = 'input-hint input-warning';
+        if (inputValidityStatus) {
+          inputValidityStatus.textContent = 'Invalid Symbol';
+          inputValidityStatus.style.color = 'var(--rose-core)';
+        }
+        clearTimeout(warningTimeout);
+        warningTimeout = setTimeout(clearInputWarning, 2500);
+      }
+    }
+
+    function clearInputWarning() {
+      if (inputValidationHint) {
+        inputValidationHint.textContent = 'Alphabet: Σ = {0, 1} • Empty string ε supported';
+        inputValidationHint.className = 'input-hint';
+        if (inputValidityStatus) {
+          inputValidityStatus.textContent = 'Valid Input';
+          inputValidityStatus.style.color = 'var(--emerald-core)';
+        }
+      }
+    }
+
+    // --- EVENT LISTENERS ---
+    function setupEventListeners() {
+      binaryInput.addEventListener('input', (e) => {
+        const raw = e.target.value;
+        const cleaned = raw.replace(/[^01]/g, '');
+        if (raw !== cleaned) {
+          showInputWarning("Illegal symbol rejected! Alphabet Σ only accepts '0' and '1'.");
+        } else {
+          clearInputWarning();
+        }
+        binaryInput.value = cleaned;
+        inputString = cleaned;
+        stringLenCounter.textContent = `Length: ${inputString.length}`;
+        resetSimulation();
+      });
+
+      btnClear.addEventListener('click', () => {
+        clearInputWarning();
+        binaryInput.value = '';
+        inputString = '';
+        stringLenCounter.textContent = `Length: 0`;
+        resetSimulation();
+      });
+
+      btnPlayPause.addEventListener('click', togglePlayPause);
+      btnStep.addEventListener('click', () => stepForward());
+      btnReset.addEventListener('click', resetSimulation);
+
+      if (btnRunAllTests) {
+        btnRunAllTests.addEventListener('click', runAllBatchTests);
+      }
+
+      speedSlider.addEventListener('input', (e) => {
+        stepDelay = parseInt(e.target.value, 10);
+        speedLabel.textContent = `${(stepDelay / 1000).toFixed(1)}s`;
+        if (isPlaying) {
+          clearInterval(playIntervalId);
+          playIntervalId = setInterval(autoStep, stepDelay);
+        }
+      });
+
+      // Tabs Navigation
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+          btn.classList.add('active');
+          const tabId = btn.getAttribute('data-tab');
+          const targetPane = document.getElementById(tabId);
+          if (targetPane) targetPane.classList.add('active');
+        });
+      });
+
+      // Global Keyboard Shortcuts
+      window.addEventListener('keydown', (e) => {
+        if (e.target === binaryInput) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            if (isPlaying) {
+              stopAutoPlay();
+            } else {
+              startAutoPlay();
+            }
+          }
+          return;
+        }
+
+        if (e.code === 'Space') {
+          e.preventDefault();
+          togglePlayPause();
+        } else if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          if (!btnStep.disabled) stepForward();
+        } else if (e.key.toLowerCase() === 'r' || e.key === 'Escape') {
+          e.preventDefault();
+          resetSimulation();
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          togglePlayPause();
+        }
+      });
+    }
+
+    // --- SIMULATION CONTROL ---
+    function resetSimulation() {
+      stopAutoPlay();
+      tapeIndex = 0;
+      currentState = currentMachine.startState;
+      executionHistory = [];
+
+      renderTape();
+      renderTraceTable();
+      updateSVGHighlights(null);
+      updateVerdictBanner('ready');
+      updateFormalTableHighlights(null, null);
+
+      btnStep.disabled = false;
+      btnPlayPause.disabled = false;
+    }
+
+    function togglePlayPause() {
+      if (isPlaying) {
+        stopAutoPlay();
+      } else {
+        startAutoPlay();
+      }
+    }
+
+    function startAutoPlay() {
+      if (inputString.length === 0) {
+        evaluateVerdict(true);
+        return;
+      }
+
+      if (tapeIndex >= inputString.length && inputString.length > 0) {
+        resetSimulation();
+      }
+      isPlaying = true;
+      playBtnText.textContent = "Pause";
+      playIcon.innerHTML = `<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>`;
+      btnPlayPause.classList.replace('btn-primary', 'btn-secondary');
+      
+      autoStep();
+      playIntervalId = setInterval(autoStep, stepDelay);
+    }
+
+    function stopAutoPlay() {
+      isPlaying = false;
+      clearInterval(playIntervalId);
+      playIntervalId = null;
+      playBtnText.textContent = "Auto Play";
+      playIcon.innerHTML = `<polygon points="5 3 19 12 5 21 5 3"></polygon>`;
+      btnPlayPause.classList.replace('btn-secondary', 'btn-primary');
+    }
+
+    function autoStep() {
+      if (inputString.length === 0) {
+        evaluateVerdict(true);
+        stopAutoPlay();
+        return;
+      }
+
+      if (tapeIndex >= inputString.length) {
+        stopAutoPlay();
+        return;
+      }
+      stepForward();
+    }
+
+    function stepForward() {
+      if (inputString.length === 0) {
+        evaluateVerdict(true);
+        btnStep.disabled = true;
+        btnPlayPause.disabled = true;
+        return;
+      }
+
+      if (tapeIndex >= inputString.length) {
+        stopAutoPlay();
+        return;
+      }
+
+      const scannedSymbol = inputString[tapeIndex];
+      const prevState = currentState;
+      const nextState = (currentMachine.transitions[prevState] && currentMachine.transitions[prevState][scannedSymbol]) !== undefined
+        ? currentMachine.transitions[prevState][scannedSymbol]
+        : prevState;
+
+      // Find SVG transition ID strictly matching from -> to and symbol
+      let transId = null;
+      const matchTrans = currentMachine.svgTransitions.find(t => 
+        t.from === prevState &&
+        (t.to === nextState || !t.to) &&
+        (t.symbol === scannedSymbol || (t.symbol && t.symbol.split(',').map(s => s.trim()).includes(scannedSymbol)))
+      );
+      if (matchTrans) transId = matchTrans.id;
+
+      // Record History
+      executionHistory.push({
+        step: tapeIndex + 1,
+        fromState: prevState,
+        symbol: scannedSymbol,
+        toState: nextState
+      });
+
+      // Transition state
+      currentState = nextState;
+      tapeIndex++;
+
+      // Update UI
+      renderTape();
+      renderTraceTable();
+      updateSVGHighlights(transId);
+      updateFormalTableHighlights(prevState, scannedSymbol);
+
+      // Check if finished
+      if (tapeIndex >= inputString.length) {
+        evaluateVerdict(false);
+        btnStep.disabled = true;
+        btnPlayPause.disabled = true;
+      } else {
+        updateVerdictBanner('running');
+      }
+    }
+
+    function evaluateVerdict(isEmptyString) {
+      const isAccepted = currentMachine.acceptStates.includes(currentState);
+
+      if (isEmptyString) {
+        executionHistory = [{
+          step: 1,
+          fromState: currentMachine.startState,
+          symbol: 'ε',
+          toState: currentMachine.startState,
+          isEpsilon: true
+        }];
+        renderTraceTable();
+      }
+
+      if (isAccepted) {
+        const msg = isEmptyString 
+          ? `Accepted! Empty string &epsilon; halts in initial accepting state ${currentState}.`
+          : `Accepted! String "${inputString}" satisfies the language and halts in final state ${currentState}.`;
+        updateVerdictBanner('accepted', msg);
+        highlightActiveStateNode('accept');
+      } else {
+        const msg = isEmptyString
+          ? `Rejected! Empty string &epsilon; is not recognized (initial state ${currentState} is non-accepting).`
+          : `Rejected! String "${inputString}" halts in non-accepting state ${currentState}.`;
+        updateVerdictBanner('rejected', msg);
+        highlightActiveStateNode('reject');
+      }
+    }
+
+    // --- UI RENDERERS ---
+    function renderTape() {
+      tapeTrack.innerHTML = '';
+      tapeStatusText.textContent = `Head Position: ${tapeIndex} / ${inputString.length}`;
+
+      if (inputString.length === 0) {
+        tapeTrack.innerHTML = `<div class="tape-empty-msg">&epsilon; (Empty string &mdash; tape contains no symbols)</div>`;
+        return;
+      }
+
+      for (let i = 0; i < inputString.length; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'tape-cell';
+        if (i < tapeIndex) {
+          cell.classList.add('processed');
+        } else if (i === tapeIndex) {
+          cell.classList.add('active');
+        }
+        cell.innerHTML = `
+          <span class="cell-index">${i}</span>
+          <span>${inputString[i]}</span>
+        `;
+        tapeTrack.appendChild(cell);
+      }
+
+      const activeCell = tapeTrack.querySelector('.tape-cell.active');
+      if (activeCell) {
+        activeCell.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
+    }
+
+    function renderTraceTable() {
+      traceTbody.innerHTML = '';
+
+      if (executionHistory.length === 0) {
+        traceTbody.innerHTML = `
+          <tr>
+            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 18px;">
+              Simulation ready. Click Step or Auto Play.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      executionHistory.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        if (index === executionHistory.length - 1) {
+          tr.classList.add('current-step');
+        }
+
+        const isToAccept = currentMachine.acceptStates.includes(item.toState);
+
+        if (item.isEpsilon) {
+          tr.innerHTML = `
+            <td><strong>1</strong></td>
+            <td><span class="state-badge">${item.fromState}</span></td>
+            <td><span class="symbol-badge">&epsilon;</span></td>
+            <td style="color: #38bdf8;">Initial state (0 transitions)</td>
+            <td><span class="state-badge ${isToAccept ? 'accept-badge' : ''}">${item.toState}</span></td>
+          `;
+        } else {
+          tr.innerHTML = `
+            <td><strong>${item.step}</strong></td>
+            <td><span class="state-badge">${item.fromState}</span></td>
+            <td><span class="symbol-badge">${item.symbol}</span></td>
+            <td style="color: #38bdf8;">&delta;(${item.fromState}, ${item.symbol}) &rarr; ${item.toState}</td>
+            <td><span class="state-badge ${isToAccept ? 'accept-badge' : ''}">${item.toState}</span></td>
+          `;
+        }
+        traceTbody.appendChild(tr);
+      });
+
+      const wrapper = document.querySelector('.table-wrapper');
+      if (wrapper) {
+        wrapper.scrollTop = wrapper.scrollHeight;
+      }
+    }
+
+    function updateSVGHighlights(activeTransId) {
+      document.querySelectorAll('.state-node').forEach(node => {
+        node.classList.remove('active', 'active-accept', 'active-reject');
+      });
+
+      const activeNode = document.getElementById(`node-${currentState}`);
+      if (activeNode) {
+        activeNode.classList.add('active');
+      }
+
+      document.querySelectorAll('.transition-group').forEach(grp => {
+        grp.classList.remove('active');
+        const path = grp.querySelector('.transition-path');
+        if (path) path.setAttribute('marker-end', 'url(#arrow)');
+      });
+
+      if (activeTransId) {
+        const transGrp = document.getElementById(activeTransId);
+        if (transGrp) {
+          transGrp.classList.add('active');
+          const path = transGrp.querySelector('.transition-path');
+          if (path) path.setAttribute('marker-end', 'url(#arrow-active)');
+        }
+      } else if (tapeIndex === 0 && executionHistory.length === 0) {
+        const startGrp = document.getElementById('trans-start');
+        if (startGrp) {
+          startGrp.classList.add('active');
+          const path = startGrp.querySelector('.transition-path');
+          if (path) path.setAttribute('marker-end', 'url(#arrow-active)');
+        }
+      }
+    }
+
+    function highlightActiveStateNode(verdict) {
+      const activeNode = document.getElementById(`node-${currentState}`);
+      if (!activeNode) return;
+      if (verdict === 'accept') {
+        activeNode.classList.add('active-accept');
+      } else if (verdict === 'reject') {
+        activeNode.classList.add('active-reject');
+      }
+    }
+
+    function updateFormalTableHighlights(prevState, symbol) {
+      document.querySelectorAll('.formal-table td').forEach(td => td.classList.remove('highlight-cell'));
+      document.querySelectorAll('.formal-table tr').forEach(tr => tr.classList.remove('highlight-row'));
+
+      if (prevState && symbol !== null) {
+        const cellId = `cell-${prevState}-${symbol}`;
+        const targetCell = document.getElementById(cellId);
+        if (targetCell) targetCell.classList.add('highlight-cell');
+
+        const rowId = `row-${prevState}`;
+        const targetRow = document.getElementById(rowId);
+        if (targetRow) targetRow.classList.add('highlight-row');
+      } else {
+        const rowId = `row-${currentState}`;
+        const targetRow = document.getElementById(rowId);
+        if (targetRow) targetRow.classList.add('highlight-row');
+      }
+    }
+
+    function updateVerdictBanner(status, customMessage) {
+      verdictBanner.className = `verdict-banner status-${status}`;
+      currentStateText.textContent = currentState;
+
+      if (status === 'ready') {
+        verdictTitle.textContent = "Ready to Simulate";
+        verdictSubtitle.textContent = inputString.length > 0 
+          ? `Loaded "${inputString}". Press Step, Auto Play, or Space to execute.` 
+          : "Empty string loaded. Click Step or Space to test epsilon.";
+        verdictIcon.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>`;
+      } else if (status === 'running') {
+        verdictTitle.textContent = `Scanning Tape (Step ${tapeIndex}/${inputString.length})`;
+        verdictSubtitle.textContent = `Current state: ${currentState}. Scanned symbol: '${inputString[tapeIndex - 1]}'.`;
+        verdictIcon.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>`;
+      } else if (status === 'accepted') {
+        verdictTitle.textContent = "STRING ACCEPTED (✓)";
+        verdictSubtitle.textContent = customMessage;
+        verdictIcon.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+      } else if (status === 'rejected') {
+        verdictTitle.textContent = "STRING REJECTED (✗)";
+        verdictSubtitle.textContent = customMessage;
+        verdictIcon.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+      }
+    }
+
+    // --- FORMAL DFA SIMULATION HELPER (BATCH TESTS & QA) ---
+    function simulateDFAString(machine, str) {
+      let state = machine.startState;
+      for (let i = 0; i < str.length; i++) {
+        const sym = str[i];
+        if (!machine.transitions[state] || machine.transitions[state][sym] === undefined) {
+          return { accepted: false, finalState: state, error: true };
+        }
+        state = machine.transitions[state][sym];
+      }
+      return { accepted: machine.acceptStates.includes(state), finalState: state, error: false };
+    }
+
+    function runAllBatchTests() {
+      let passed = 0;
+      const total = currentMachine.batchTests.length;
+      const items = document.querySelectorAll('.batch-item');
+
+      currentMachine.batchTests.forEach((test, idx) => {
+        const res = simulateDFAString(currentMachine, test.str);
+        const isCorrect = res.accepted === test.accept;
+        if (isCorrect) passed++;
+
+        if (items[idx]) {
+          items[idx].style.borderColor = isCorrect ? 'rgba(16, 185, 129, 0.6)' : 'rgba(244, 63, 94, 0.6)';
+          items[idx].style.background = isCorrect ? 'rgba(16, 185, 129, 0.08)' : 'rgba(244, 63, 94, 0.08)';
+        }
+      });
+
+      if (batchSummaryContainer) {
+        batchSummaryContainer.style.display = 'block';
+        batchSummaryContainer.innerHTML = `
+          <div class="batch-summary-badge" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>✓ Test Suite Verification</span>
+            <span><strong>${passed} / ${total} Tests Passed (${Math.round((passed / total) * 100)}%)</strong></span>
+          </div>
+        `;
+      }
+    }
+
+    // Global Test Suite for Console Verification & QA Smoke Tests
+    window.AutomataLab = {
+      MACHINES,
+      simulateDFAString,
+      runAllBatchTests,
+      runFullAutomatedAudit: function() {
+        const results = {};
+        let totalTests = 0;
+        let totalPassed = 0;
+
+        Object.values(MACHINES).forEach(m => {
+          results[m.id] = { name: m.name, passed: 0, total: m.batchTests.length, errors: [] };
+          m.batchTests.forEach(t => {
+            totalTests++;
+            const sim = simulateDFAString(m, t.str);
+            if (sim.accepted === t.accept) {
+              results[m.id].passed++;
+              totalPassed++;
+            } else {
+              results[m.id].errors.push({ input: t.str, expected: t.accept, got: sim.accepted });
+            }
+          });
+        });
+
+        return {
+          totalTests,
+          totalPassed,
+          allPassed: totalTests === totalPassed,
+          breakdown: results
+        };
+      }
+    };
+
+    // Launch on DOM ready
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
